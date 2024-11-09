@@ -14,13 +14,14 @@ public class ToDoListApp {
     private static JTabbedPane tabbedPane = new JTabbedPane();
 
     public static void main(String[] args) {
-        // Create a panel with a button for demonstration
+        // Create a frame with BorderLayout
         JFrame frame = new JFrame("Todoit");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
         
-        // Create the panel for the buttons
-        JPanel panel = new JPanel();
+        // Create the panel for the buttons at the bottom
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));  // Center-align buttons
         JButton addTaskButton = new JButton("Add Task");
         JButton createNewListButton = new JButton("Create New List");
 
@@ -109,13 +110,15 @@ public class ToDoListApp {
             }
         });
 
-        // Add buttons to the panel
-        panel.add(addTaskButton);
-        panel.add(createNewListButton);
+        // Add buttons to the bottom panel
+        buttonPanel.add(addTaskButton);
+        buttonPanel.add(createNewListButton);
 
-        // Add the tabbed pane to the frame
-        frame.add(panel, BorderLayout.NORTH); // Buttons at the top
-        frame.add(tabbedPane, BorderLayout.CENTER); // Tabbed pane in the center
+        // Add the tabbed pane to the frame (centered in the frame)
+        frame.add(tabbedPane, BorderLayout.CENTER);  // Center the tabs
+
+        // Add the button panel to the frame (at the bottom)
+        frame.add(buttonPanel, BorderLayout.SOUTH);  // Place buttons at the bottom
 
         // Set the frame size and visibility
         frame.setSize(400, 600);
