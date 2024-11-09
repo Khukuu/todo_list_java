@@ -4,7 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
-public class Todoit {
+public class ToDoListApp {
     // Store references to the task panels for each list
     private static ArrayList<JPanel> taskPanels = new ArrayList<>();
     private static ArrayList<JPanel> historyPanels = new ArrayList<>();
