@@ -1,10 +1,9 @@
 import java.awt.*;
-import java.util.ArrayList;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class Todoit {
+public class ToDoListApp {
     // The main task and history lists for a single pane
     private static JPanel taskPanel = new JPanel();
     private static JScrollPane scrollPane;
