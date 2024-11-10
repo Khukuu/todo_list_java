@@ -140,3 +140,4 @@ public class ToDoListApp {
 
 /*nya ichi ni san niya agirato*/
 /*Ang sarap ko gar, glob glob glob */
+//pre pagawa ng delete function para sa mga lists tyyyyy
