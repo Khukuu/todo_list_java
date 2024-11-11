@@ -22,6 +22,7 @@ public class ToDoListApp {
         buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
         JButton addTaskButton = new JButton("Add Task");
         JButton createNewListButton = new JButton("Create New List");
+        JButton deleteListButton = new JButton("Delete List"); // New delete button
 
         // ACTION LISTENER
         createNewListButton.addActionListener(new ActionListener() {
@@ -88,7 +89,7 @@ public class ToDoListApp {
                             @Override
                             public void actionPerformed(ActionEvent e) {
                                 if (taskCheckBox.isSelected()) {
-                                    // MOVE TASK DONE BELOWw
+                                    // MOVE TASK DONE BELOW
                                     JLabel completedLabel = new JLabel("<html><strike>" + task + "</strike></html>");
                                     
                                     // MAX 10 ITEM FOR HISTORY PANEL PERO NAGSTORE LANG 7
@@ -120,9 +121,30 @@ public class ToDoListApp {
             }
         });
 
+        // DELETE FUNCTION FOR LIST
+        deleteListButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int selectedIndex = tabbedPane.getSelectedIndex();
+                if (selectedIndex != -1) {
+                    // CONFIRMATION DIALOG
+                    int confirm = JOptionPane.showConfirmDialog(null, "Are you sure you want to delete this list?", "Delete List", JOptionPane.YES_NO_OPTION);
+                    if (confirm == JOptionPane.YES_OPTION) {
+                        // REMOVE THE SELECTED TAB AND ASSOCIATED PANELS
+                        tabbedPane.remove(selectedIndex);
+                        taskPanels.remove(selectedIndex);
+                        historyPanels.remove(selectedIndex);
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(null, "No list selected to delete.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
         // BUTTONS
         buttonPanel.add(addTaskButton);
         buttonPanel.add(createNewListButton);
+        buttonPanel.add(deleteListButton); // ADD DELETE BUTTON TO PANEL
 
         // TABS
         frame.add(tabbedPane, BorderLayout.CENTER);
