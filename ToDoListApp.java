@@ -2,6 +2,7 @@ import java.awt.*;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.*;
 import java.util.ArrayList;
 
 public class ToDoListApp {
@@ -18,6 +19,9 @@ public class ToDoListApp {
         JFrame frame = new JFrame("ToDoIt");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
+
+        // Load tasks from file at startup
+        loadTasksFromFile();
 
         // BUTTONS
         JPanel buttonPanel = new JPanel();
@@ -163,12 +167,93 @@ public class ToDoListApp {
         frame.add(tabbedPane, BorderLayout.CENTER);
         frame.add(buttonPanel, BorderLayout.SOUTH);
 
+        // Add window listener to save tasks on close
+        frame.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                saveTasksToFile();
+            }
+        });
+
         // FRAME SIZE AND DISPLAY
         frame.setSize(400, 600);
         frame.setVisible(true);
 
-        // INITIALIZE WITH A DEFAULT LIST
-        createNewListButton.doClick();
+        // INITIALIZE WITH A DEFAULT LIST IF NONE EXIST
+        if (tabbedPane.getTabCount() == 0) {
+            createNewListButton.doClick();
+        }
+    }
+
+    // Save tasks to a file, including list names
+    private static void saveTasksToFile() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("tasks.txt"))) {
+            for (int i = 0; i < taskPanels.size(); i++) {
+                JPanel taskPanel = taskPanels.get(i);
+                String listName = tabbedPane.getTitleAt(i);
+                writer.write("LIST_START," + listName);
+                writer.newLine();
+                for (Component component : taskPanel.getComponents()) {
+                    if (component instanceof JCheckBox) {
+                        JCheckBox taskCheckBox = (JCheckBox) component;
+                        writer.write(taskCheckBox.getText().replaceAll("<.*?>", "") + "," + taskCheckBox.isSelected());
+                        writer.newLine();
+                    }
+                }
+                writer.write("LIST_END");
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Load tasks from a file, including list names
+    private static void loadTasksFromFile() {
+        try (BufferedReader reader = new BufferedReader(new FileReader("tasks.txt"))) {
+            String line;
+            JPanel currentTaskPanel = null;
+            String listName = null;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("LIST_START")) {
+                    String[] parts = line.split(",", 2);
+                    listName = (parts.length > 1) ? parts[1] : "Unnamed List";
+                    currentTaskPanel = new JPanel();
+                    currentTaskPanel.setLayout(new BoxLayout(currentTaskPanel, BoxLayout.Y_AXIS));
+                    currentTaskPanel.setBackground(panelColor);
+                    taskPanels.add(currentTaskPanel);
+                } else if (line.equals("LIST_END")) {
+                    if (currentTaskPanel != null) {
+                        JPanel newHistoryPanel = new JPanel();
+                        newHistoryPanel.setLayout(new BoxLayout(newHistoryPanel, BoxLayout.Y_AXIS));
+                        newHistoryPanel.setPreferredSize(new Dimension(300, 100));
+                        newHistoryPanel.setBackground(panelColor);
+                        historyPanels.add(newHistoryPanel);
+
+                        JPanel fullPanel = new JPanel();
+                        fullPanel.setLayout(new BoxLayout(fullPanel, BoxLayout.Y_AXIS));
+                        fullPanel.setBackground(panelColor);
+                        JScrollPane newTaskScrollPane = new JScrollPane(currentTaskPanel);
+                        newTaskScrollPane.setPreferredSize(new Dimension(300, 500));
+                        newTaskScrollPane.getViewport().setBackground(panelColor);
+                        fullPanel.add(newTaskScrollPane);
+                        fullPanel.add(newHistoryPanel);
+                        tabbedPane.addTab(listName, fullPanel);
+                    }
+                } else {
+                    String[] taskData = line.split(",");
+                    if (taskData.length == 2 && currentTaskPanel != null) {
+                        JCheckBox taskCheckBox = new JCheckBox(taskData[0]);
+                        taskCheckBox.setSelected(Boolean.parseBoolean(taskData[1]));
+                        taskCheckBox.setBackground(panelColor);
+                        taskCheckBox.setForeground(foregroundColor);
+                        currentTaskPanel.add(taskCheckBox);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
 

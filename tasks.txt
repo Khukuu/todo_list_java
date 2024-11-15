@@ -1,0 +1,4 @@
+LIST_START,Grocery
+Chocolate Milk,false
+Hotdog,false
+LIST_END
