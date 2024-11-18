@@ -1,3 +1,0 @@
-LIST_START,asd
-asdad,false
-LIST_END
