@@ -1,4 +1,3 @@
-LIST_START,Grocery
-Chocolate Milk,false
-Hotdog,false
+LIST_START,asd
+asdad,false
 LIST_END

@@ -98,32 +98,36 @@ public class ToDoListApp {
                         taskCheckBox.setForeground(foregroundColor);
 
                         // ADD ACTION LISTENER TO HANDLE CHECK/UNCHECK
+                        final JPanel finalCurrentTaskPanel = currentTaskPanel;
+                        final JPanel finalCurrentHistoryPanel = currentHistoryPanel;
+                        final String finalTask = task;
+
                         taskCheckBox.addActionListener(new ActionListener() {
                             @Override
                             public void actionPerformed(ActionEvent e) {
                                 if (taskCheckBox.isSelected()) {
                                     // TASK CHECKED, STRIKE THROUGH AND MOVE TO HISTORY
-                                    taskCheckBox.setText("<html><strike>" + task + "</strike></html>");
+                                    taskCheckBox.setText("<html><strike>" + finalTask + "</strike></html>");
                                     
-                                    if (currentHistoryPanel.getComponentCount() >= HISTORY_LIMIT) {
-                                        currentHistoryPanel.remove(currentHistoryPanel.getComponentCount() - 1); // REMOVE OLDEST ITEM
+                                    if (finalCurrentHistoryPanel.getComponentCount() >= HISTORY_LIMIT) {
+                                        finalCurrentHistoryPanel.remove(finalCurrentHistoryPanel.getComponentCount() - 1); // REMOVE OLDEST ITEM
                                     }
-                                    currentHistoryPanel.add(taskCheckBox, 0); // ADD TO TOP OF HISTORY
+                                    finalCurrentHistoryPanel.add(taskCheckBox, 0); // ADD TO TOP OF HISTORY
 
                                     // REMOVE FROM TASK PANEL
-                                    currentTaskPanel.remove(taskCheckBox);
+                                    finalCurrentTaskPanel.remove(taskCheckBox);
                                 } else {
                                     // TASK UNCHECKED, REMOVE STRIKE THROUGH AND MOVE BACK TO TASKS
-                                    taskCheckBox.setText(task);
-                                    currentHistoryPanel.remove(taskCheckBox);
-                                    currentTaskPanel.add(taskCheckBox);
+                                    taskCheckBox.setText(finalTask);
+                                    finalCurrentHistoryPanel.remove(taskCheckBox);
+                                    finalCurrentTaskPanel.add(taskCheckBox);
                                 }
 
                                 // REPAINT PANELS AFTER UPDATE
-                                currentTaskPanel.revalidate();
-                                currentTaskPanel.repaint();
-                                currentHistoryPanel.revalidate();
-                                currentHistoryPanel.repaint();
+                                finalCurrentTaskPanel.revalidate();
+                                finalCurrentTaskPanel.repaint();
+                                finalCurrentHistoryPanel.revalidate();
+                                finalCurrentHistoryPanel.repaint();
                             }
                         });
 
@@ -213,41 +217,83 @@ public class ToDoListApp {
         try (BufferedReader reader = new BufferedReader(new FileReader("tasks.txt"))) {
             String line;
             JPanel currentTaskPanel = null;
+            JPanel currentHistoryPanel = null;
             String listName = null;
+
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith("LIST_START")) {
                     String[] parts = line.split(",", 2);
                     listName = (parts.length > 1) ? parts[1] : "Unnamed List";
+
                     currentTaskPanel = new JPanel();
                     currentTaskPanel.setLayout(new BoxLayout(currentTaskPanel, BoxLayout.Y_AXIS));
                     currentTaskPanel.setBackground(panelColor);
                     taskPanels.add(currentTaskPanel);
-                } else if (line.equals("LIST_END")) {
-                    if (currentTaskPanel != null) {
-                        JPanel newHistoryPanel = new JPanel();
-                        newHistoryPanel.setLayout(new BoxLayout(newHistoryPanel, BoxLayout.Y_AXIS));
-                        newHistoryPanel.setPreferredSize(new Dimension(300, 100));
-                        newHistoryPanel.setBackground(panelColor);
-                        historyPanels.add(newHistoryPanel);
 
-                        JPanel fullPanel = new JPanel();
-                        fullPanel.setLayout(new BoxLayout(fullPanel, BoxLayout.Y_AXIS));
-                        fullPanel.setBackground(panelColor);
-                        JScrollPane newTaskScrollPane = new JScrollPane(currentTaskPanel);
-                        newTaskScrollPane.setPreferredSize(new Dimension(300, 500));
-                        newTaskScrollPane.getViewport().setBackground(panelColor);
-                        fullPanel.add(newTaskScrollPane);
-                        fullPanel.add(newHistoryPanel);
-                        tabbedPane.addTab(listName, fullPanel);
-                    }
+                    currentHistoryPanel = new JPanel();
+                    currentHistoryPanel.setLayout(new BoxLayout(currentHistoryPanel, BoxLayout.Y_AXIS));
+                    currentHistoryPanel.setPreferredSize(new Dimension(300, 100));
+                    currentHistoryPanel.setBackground(panelColor);
+                    historyPanels.add(currentHistoryPanel);
+
+                } else if (line.equals("LIST_END")) {
+                    JPanel fullPanel = new JPanel();
+                    fullPanel.setLayout(new BoxLayout(fullPanel, BoxLayout.Y_AXIS));
+                    fullPanel.setBackground(panelColor);
+
+                    JScrollPane newTaskScrollPane = new JScrollPane(currentTaskPanel);
+                    newTaskScrollPane.setPreferredSize(new Dimension(300, 500));
+                    newTaskScrollPane.getViewport().setBackground(panelColor);
+
+                    fullPanel.add(newTaskScrollPane);
+                    fullPanel.add(currentHistoryPanel);
+
+                    tabbedPane.addTab(listName, fullPanel);
+                    tabbedPane.setBackground(panelColor);
+                    tabbedPane.setForeground(foregroundColor);
                 } else {
                     String[] taskData = line.split(",");
-                    if (taskData.length == 2 && currentTaskPanel != null) {
-                        JCheckBox taskCheckBox = new JCheckBox(taskData[0]);
-                        taskCheckBox.setSelected(Boolean.parseBoolean(taskData[1]));
+                    if (taskData.length == 2 && currentTaskPanel != null && currentHistoryPanel != null) {
+                        String taskName = taskData[0];
+                        boolean isChecked = Boolean.parseBoolean(taskData[1]);
+
+                        JCheckBox taskCheckBox = new JCheckBox(taskName);
+                        taskCheckBox.setSelected(isChecked);
                         taskCheckBox.setBackground(panelColor);
                         taskCheckBox.setForeground(foregroundColor);
-                        currentTaskPanel.add(taskCheckBox);
+
+                        if (isChecked) {
+                            taskCheckBox.setText("<html><strike>" + taskName + "</strike></html>");
+                            currentHistoryPanel.add(taskCheckBox, 0);
+                        } else {
+                            currentTaskPanel.add(taskCheckBox);
+                        }
+
+                        final JPanel finalCurrentTaskPanel = currentTaskPanel;
+                        final JPanel finalCurrentHistoryPanel = currentHistoryPanel;
+                        final String finalTaskName = taskName;
+
+                        taskCheckBox.addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                if (taskCheckBox.isSelected()) {
+                                    taskCheckBox.setText("<html><strike>" + finalTaskName + "</strike></html>");
+                                    if (finalCurrentHistoryPanel.getComponentCount() >= HISTORY_LIMIT) {
+                                        finalCurrentHistoryPanel.remove(finalCurrentHistoryPanel.getComponentCount() - 1);
+                                    }
+                                    finalCurrentHistoryPanel.add(taskCheckBox, 0);
+                                    finalCurrentTaskPanel.remove(taskCheckBox);
+                                } else {
+                                    taskCheckBox.setText(finalTaskName);
+                                    finalCurrentHistoryPanel.remove(taskCheckBox);
+                                    finalCurrentTaskPanel.add(taskCheckBox);
+                                }
+                                finalCurrentTaskPanel.revalidate();
+                                finalCurrentTaskPanel.repaint();
+                                finalCurrentHistoryPanel.revalidate();
+                                finalCurrentHistoryPanel.repaint();
+                            }
+                        });
                     }
                 }
             }
