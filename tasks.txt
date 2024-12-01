@@ -1,5 +1,4 @@
 LIST_START,Grocery list
-egg,false
 LIST_END
 LIST_START,Chores
 LIST_END
