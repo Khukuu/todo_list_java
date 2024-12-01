@@ -1,4 +1,0 @@
-LIST_START,Grocery list
-LIST_END
-LIST_START,Chores
-LIST_END
