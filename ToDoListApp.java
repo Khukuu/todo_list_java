@@ -302,6 +302,3 @@ public class ToDoListApp {
         }
     }
 }
-
-// haha tite wala na naman akong tulog
-// all goods
