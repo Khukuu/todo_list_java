@@ -34,43 +34,49 @@ public class ToDoListApp {
         createNewListButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // THIS PROMPTS USER TO ENTER A NEW LIST
-                String listName = JOptionPane.showInputDialog(null, "Enter the name of the new list:", "New List", JOptionPane.PLAIN_MESSAGE);
-                if (listName != null && !listName.trim().isEmpty()) {
-                    // NEW TASK PANEL FOR NEW LIST
-                    JPanel newTaskPanel = new JPanel();
-                    newTaskPanel.setLayout(new BoxLayout(newTaskPanel, BoxLayout.Y_AXIS));
-                    newTaskPanel.setBackground(panelColor);
-                    JScrollPane newTaskScrollPane = new JScrollPane(newTaskPanel);
-                    newTaskScrollPane.setPreferredSize(new Dimension(300, 500));
-                    newTaskScrollPane.getViewport().setBackground(panelColor);
+                while (true) {
+                    try {
+                        String listName = JOptionPane.showInputDialog(null, "Enter the name of the new list:", "New List", JOptionPane.PLAIN_MESSAGE);
+                        
+                        // Check if the input is null (Cancel button pressed)
+                        if (listName == null) {
+                            return; // Exit the method, closing the dialog without creating a list
+                        }
 
-                    // HISTORY PANEL
-                    JPanel newHistoryPanel = new JPanel();
-                    newHistoryPanel.setLayout(new BoxLayout(newHistoryPanel, BoxLayout.Y_AXIS));
-                    newHistoryPanel.setPreferredSize(new Dimension(300, 100));
-                    newHistoryPanel.setBackground(panelColor);
+                        // Check for empty or null input
+                        if (listName.trim().isEmpty()) {
+                            throw new Exception("List name cannot be empty.");
+                        }
 
-                    // FULL PANEL
-                    JPanel fullPanel = new JPanel();
-                    fullPanel.setLayout(new BoxLayout(fullPanel, BoxLayout.Y_AXIS));
-                    fullPanel.setBackground(panelColor);
-                    fullPanel.add(newTaskScrollPane);
-                    fullPanel.add(newHistoryPanel);
+                        JPanel newTaskPanel = new JPanel();
+                        newTaskPanel.setLayout(new BoxLayout(newTaskPanel, BoxLayout.Y_AXIS));
+                        newTaskPanel.setBackground(panelColor);
+                        JScrollPane newTaskScrollPane = new JScrollPane(newTaskPanel);
+                        newTaskScrollPane.setPreferredSize(new Dimension(300, 500));
+                        newTaskScrollPane.getViewport().setBackground(panelColor);
 
-                    // ADD NEW LIST TO TABBED PANE
-                    tabbedPane.addTab(listName, fullPanel);
-                    tabbedPane.setBackground(panelColor);
-                    tabbedPane.setForeground(foregroundColor);
+                        JPanel newHistoryPanel = new JPanel();
+                        newHistoryPanel.setLayout(new BoxLayout(newHistoryPanel, BoxLayout.Y_AXIS));
+                        newHistoryPanel.setPreferredSize(new Dimension(300, 100));
+                        newHistoryPanel.setBackground(panelColor);
 
-                    // STORE TASK AND HISTORY PANELS
-                    taskPanels.add(newTaskPanel);
-                    historyPanels.add(newHistoryPanel);
+                        JPanel fullPanel = new JPanel();
+                        fullPanel.setLayout(new BoxLayout(fullPanel, BoxLayout.Y_AXIS));
+                        fullPanel.setBackground(panelColor);
+                        fullPanel.add(newTaskScrollPane);
+                        fullPanel.add(newHistoryPanel);
 
-                    // SELECT THE NEWLY CREATED TAB
-                    tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
-                    frame.revalidate();
-                    frame.repaint();
+                        tabbedPane.addTab(listName, fullPanel);
+                        taskPanels.add(newTaskPanel);
+                        historyPanels.add(newHistoryPanel);
+                        tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
+
+                        frame.revalidate();
+                        frame.repaint();
+                        break; // Exit retry loop
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(null, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             }
         });
@@ -79,68 +85,68 @@ public class ToDoListApp {
         addTaskButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                // Check if a list is selected
                 int selectedIndex = tabbedPane.getSelectedIndex();
-                if (selectedIndex != -1 && selectedIndex < taskPanels.size()) {
-                    JPanel currentTaskPanel = taskPanels.get(selectedIndex);
-                    JPanel currentHistoryPanel = historyPanels.get(selectedIndex);
+                if (selectedIndex == -1) {
+                    JOptionPane.showMessageDialog(null, "There are currently no list.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return; // Exit the method without doing anything
+                }
 
+                while (true) {
                     try {
-                        // PROMPT FOR A NEW TASK
-                        String task = JOptionPane.showInputDialog(null, "Enter a new task:", "Add Task", JOptionPane.PLAIN_MESSAGE);
+                        // Proceed with adding the task
+                        JPanel currentTaskPanel = taskPanels.get(selectedIndex);
+                        JPanel currentHistoryPanel = historyPanels.get(selectedIndex);
 
-                        if (task == null || task.trim().isEmpty()) {
-                            throw new Exception("Invalid task entry!");
+                        String task = JOptionPane.showInputDialog(null, "Enter a new task:", "Add Task", JOptionPane.PLAIN_MESSAGE);
+                        
+                        // Check if the input is null (Cancel button pressed)
+                        if (task == null) {
+                            return; // Exit the method, closing the dialog without adding a task
                         }
 
-                        // CHECKBOX FOR TASK
+                        // Check for empty or null input
+                        if (task.trim().isEmpty()) {
+                            throw new Exception("Task cannot be empty.");
+                        }
+
                         JCheckBox taskCheckBox = new JCheckBox(task);
                         taskCheckBox.setBackground(panelColor);
                         taskCheckBox.setForeground(foregroundColor);
-
-                        // ADD ACTION LISTENER TO HANDLE CHECK/UNCHECK
-                        final JPanel finalCurrentTaskPanel = currentTaskPanel;
-                        final JPanel finalCurrentHistoryPanel = currentHistoryPanel;
-                        final String finalTask = task;
 
                         taskCheckBox.addActionListener(new ActionListener() {
                             @Override
                             public void actionPerformed(ActionEvent e) {
                                 if (taskCheckBox.isSelected()) {
-                                    // TASK CHECKED, STRIKE THROUGH AND MOVE TO HISTORY
-                                    taskCheckBox.setText("<html><strike>" + finalTask + "</strike></html>");
-                                    
-                                    if (finalCurrentHistoryPanel.getComponentCount() >= HISTORY_LIMIT) {
-                                        finalCurrentHistoryPanel.remove(finalCurrentHistoryPanel.getComponentCount() - 1); // REMOVE OLDEST ITEM
+                                    taskCheckBox.setText("<html><strike>" + task + "</strike></html>");
+                                    if (currentHistoryPanel.getComponentCount() >= HISTORY_LIMIT) {
+                                        currentHistoryPanel.remove(currentHistoryPanel.getComponentCount() - 1);
                                     }
-                                    finalCurrentHistoryPanel.add(taskCheckBox, 0); // ADD TO TOP OF HISTORY
-
-                                    // REMOVE FROM TASK PANEL
-                                    finalCurrentTaskPanel.remove(taskCheckBox);
+                                    currentHistoryPanel.add(taskCheckBox, 0);
+                                    currentTaskPanel.remove(taskCheckBox);
                                 } else {
-                                    // TASK UNCHECKED, REMOVE STRIKE THROUGH AND MOVE BACK TO TASKS
-                                    taskCheckBox.setText(finalTask);
-                                    finalCurrentHistoryPanel.remove(taskCheckBox);
-                                    finalCurrentTaskPanel.add(taskCheckBox);
+                                    taskCheckBox.setText(task);
+                                    currentHistoryPanel.remove(taskCheckBox);
+                                    currentTaskPanel.add(taskCheckBox);
                                 }
-
-                                // REPAINT PANELS AFTER UPDATE
-                                finalCurrentTaskPanel.revalidate();
-                                finalCurrentTaskPanel.repaint();
-                                finalCurrentHistoryPanel.revalidate();
-                                finalCurrentHistoryPanel.repaint();
+                                currentTaskPanel.revalidate();
+                                currentTaskPanel.repaint();
+                                currentHistoryPanel.revalidate();
+                                currentHistoryPanel.repaint();
                             }
                         });
 
-                        // ADD NEW TASK TO TASK PANEL
                         currentTaskPanel.add(taskCheckBox);
                         currentTaskPanel.revalidate();
                         currentTaskPanel.repaint();
+                        break; // Exit retry loop
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(null, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                     }
                 }
             }
         });
+
 
         // ACTION LISTENER: Delete List
         deleteListButton.addActionListener(new ActionListener() {
