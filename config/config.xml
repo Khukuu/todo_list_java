@@ -3,8 +3,8 @@
   <dontWrapJar>false</dontWrapJar>
   <headerType>gui</headerType>
   <jar>C:\Users\chlar\Documents\Repositories\todo_list_java\todo_list_java\ToDoListApp.jar</jar>
-  <outfile>ToDoit.exe</outfile>
-  <errTitle>Please download java to run the application!</errTitle>
+  <outfile>C:\Users\chlar\Documents\Repositories\todo_list_java\todo_list_java\ToDoit.exe</outfile>
+  <errTitle>Please download java first!</errTitle>
   <cmdLine></cmdLine>
   <chdir>.</chdir>
   <priority>normal</priority>
@@ -13,7 +13,7 @@
   <stayAlive>false</stayAlive>
   <restartOnCrash>false</restartOnCrash>
   <manifest></manifest>
-  <icon>C:\Users\chlar\Documents\Repositories\todo_list_java\todo_list_java\todoit.ico</icon>
+  <icon>C:\Users\chlar\Documents\Repositories\todo_list_java\todo_list_java\Untitled20.ico</icon>
   <jre>
     <path>%JAVA_HOME%;%PATH%</path>
     <requiresJdk>false</requiresJdk>
