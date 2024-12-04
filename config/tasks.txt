@@ -1,2 +1,8 @@
-LIST_START,asd
+LIST_START,Grocery list
+Eggs,false
+Rice,false
+Tide pods,false
+LIST_END
+LIST_START,Todo list
+Fix this code!,false
 LIST_END
