@@ -1,7 +1,6 @@
 import java.awt.*;
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.io.*;
 import java.util.ArrayList;
 
@@ -26,7 +25,7 @@ public class ToDoListApp {
         // BUTTONS
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
-        JButton addTaskButton = new JButton("Add Task");
+        JButton addTaskButton = new JButton("Add to List"); // Changed the label here
         JButton createNewListButton = new JButton("Create New List");
         JButton deleteListButton = new JButton("Delete List"); // New delete button
 
@@ -37,7 +36,7 @@ public class ToDoListApp {
                 while (true) {
                     try {
                         String listName = JOptionPane.showInputDialog(null, "Enter the name of the new list:", "New List", JOptionPane.PLAIN_MESSAGE);
-                        
+
                         // Check if the input is null (Cancel button pressed)
                         if (listName == null) {
                             return; // Exit the method, closing the dialog without creating a list
@@ -69,6 +68,10 @@ public class ToDoListApp {
                         tabbedPane.addTab(listName, fullPanel);
                         taskPanels.add(newTaskPanel);
                         historyPanels.add(newHistoryPanel);
+
+                        // Add mouse listener for renaming the list tab
+                        addRightClickRenameTab(tabbedPane, tabbedPane.getTabCount() - 1);
+
                         tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
 
                         frame.revalidate();
@@ -99,7 +102,7 @@ public class ToDoListApp {
                         JPanel currentHistoryPanel = historyPanels.get(selectedIndex);
 
                         String task = JOptionPane.showInputDialog(null, "Enter a new task:", "Add Task", JOptionPane.PLAIN_MESSAGE);
-                        
+
                         // Check if the input is null (Cancel button pressed)
                         if (task == null) {
                             return; // Exit the method, closing the dialog without adding a task
@@ -114,18 +117,20 @@ public class ToDoListApp {
                         taskCheckBox.setBackground(panelColor);
                         taskCheckBox.setForeground(foregroundColor);
 
+                        // Action to handle task completion (strike-through)
                         taskCheckBox.addActionListener(new ActionListener() {
                             @Override
                             public void actionPerformed(ActionEvent e) {
+                                // Strike-through effect without opening a new window
                                 if (taskCheckBox.isSelected()) {
-                                    taskCheckBox.setText("<html><strike>" + task + "</strike></html>");
+                                    taskCheckBox.setText("<html><strike>" + taskCheckBox.getText() + "</strike></html>");
                                     if (currentHistoryPanel.getComponentCount() >= HISTORY_LIMIT) {
                                         currentHistoryPanel.remove(currentHistoryPanel.getComponentCount() - 1);
                                     }
                                     currentHistoryPanel.add(taskCheckBox, 0);
                                     currentTaskPanel.remove(taskCheckBox);
                                 } else {
-                                    taskCheckBox.setText(task);
+                                    taskCheckBox.setText(taskCheckBox.getText().replaceAll("<.*?>", "")); // Remove HTML tags for editing
                                     currentHistoryPanel.remove(taskCheckBox);
                                     currentTaskPanel.add(taskCheckBox);
                                 }
@@ -135,6 +140,9 @@ public class ToDoListApp {
                                 currentHistoryPanel.repaint();
                             }
                         });
+
+                        // Add right-click edit feature for tasks (Only Rename or Delete)
+                        addRightClickEditFeature(taskCheckBox, currentTaskPanel, currentHistoryPanel);
 
                         currentTaskPanel.add(taskCheckBox);
                         currentTaskPanel.revalidate();
@@ -146,7 +154,6 @@ public class ToDoListApp {
                 }
             }
         });
-
 
         // ACTION LISTENER: Delete List
         deleteListButton.addActionListener(new ActionListener() {
@@ -195,116 +202,72 @@ public class ToDoListApp {
         }
     }
 
-    // Save tasks to a file, including list names
-    private static void saveTasksToFile() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("tasks.txt"))) {
-            for (int i = 0; i < taskPanels.size(); i++) {
-                JPanel taskPanel = taskPanels.get(i);
-                String listName = tabbedPane.getTitleAt(i);
-                writer.write("LIST_START," + listName);
-                writer.newLine();
-                for (Component component : taskPanel.getComponents()) {
-                    if (component instanceof JCheckBox) {
-                        JCheckBox taskCheckBox = (JCheckBox) component;
-                        writer.write(taskCheckBox.getText().replaceAll("<.*?>", "") + "," + taskCheckBox.isSelected());
-                        writer.newLine();
+    // Add right-click edit feature for tasks (Only Rename or Delete)
+    private static void addRightClickEditFeature(JCheckBox checkBox, JPanel taskPanel, JPanel historyPanel) {
+        checkBox.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                // Only allow editing if the task is not checked off
+                if (!checkBox.isSelected() && SwingUtilities.isRightMouseButton(e)) {
+                    String[] options = {"Rename", "Delete"};
+                    int choice = JOptionPane.showOptionDialog(
+                            null,
+                            "Choose an action:",
+                            "Right-click Task Options",
+                            JOptionPane.DEFAULT_OPTION,
+                            JOptionPane.INFORMATION_MESSAGE,
+                            null,
+                            options,
+                            options[0]  // Default to Rename
+                    );
+
+                    if (choice == 0) { // Rename
+                        String newTaskName = JOptionPane.showInputDialog(null, "Rename task:", checkBox.getText().replaceAll("<.*?>", ""));
+                        if (newTaskName != null && !newTaskName.trim().isEmpty()) {
+                            checkBox.setText(newTaskName);
+                        }
+                    } else if (choice == 1) { // Delete
+                        int confirmDelete = JOptionPane.showConfirmDialog(null, "Are you sure you want to delete this task?", "Delete Task", JOptionPane.YES_NO_OPTION);
+                        if (confirmDelete == JOptionPane.YES_OPTION) {
+                            taskPanel.remove(checkBox);
+                            historyPanel.remove(checkBox);
+                            taskPanel.revalidate();
+                            taskPanel.repaint();
+                            historyPanel.revalidate();
+                            historyPanel.repaint();
+                        }
                     }
                 }
-                writer.write("LIST_END");
-                writer.newLine();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        });
     }
 
-    // Load tasks from a file, including list names
-    private static void loadTasksFromFile() {
-        try (BufferedReader reader = new BufferedReader(new FileReader("tasks.txt"))) {
-            String line;
-            JPanel currentTaskPanel = null;
-            JPanel currentHistoryPanel = null;
-            String listName = null;
+    // Add right-click rename feature for JTabbedPane tabs
+    private static void addRightClickRenameTab(JTabbedPane tabbedPane, int index) {
+        tabbedPane.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e) && tabbedPane.getSelectedIndex() == index) {
+                    int choice = JOptionPane.showConfirmDialog(null, "Do you want to rename this list?", "Rename List", JOptionPane.YES_NO_OPTION);
 
-            while ((line = reader.readLine()) != null) {
-                if (line.startsWith("LIST_START")) {
-                    String[] parts = line.split(",", 2);
-                    listName = (parts.length > 1) ? parts[1] : "Unnamed List";
-
-                    currentTaskPanel = new JPanel();
-                    currentTaskPanel.setLayout(new BoxLayout(currentTaskPanel, BoxLayout.Y_AXIS));
-                    currentTaskPanel.setBackground(panelColor);
-                    taskPanels.add(currentTaskPanel);
-
-                    currentHistoryPanel = new JPanel();
-                    currentHistoryPanel.setLayout(new BoxLayout(currentHistoryPanel, BoxLayout.Y_AXIS));
-                    currentHistoryPanel.setPreferredSize(new Dimension(300, 100));
-                    currentHistoryPanel.setBackground(panelColor);
-                    historyPanels.add(currentHistoryPanel);
-
-                } else if (line.equals("LIST_END")) {
-                    JPanel fullPanel = new JPanel();
-                    fullPanel.setLayout(new BoxLayout(fullPanel, BoxLayout.Y_AXIS));
-                    fullPanel.setBackground(panelColor);
-
-                    JScrollPane newTaskScrollPane = new JScrollPane(currentTaskPanel);
-                    newTaskScrollPane.setPreferredSize(new Dimension(300, 500));
-                    newTaskScrollPane.getViewport().setBackground(panelColor);
-
-                    fullPanel.add(newTaskScrollPane);
-                    fullPanel.add(currentHistoryPanel);
-
-                    tabbedPane.addTab(listName, fullPanel);
-                    tabbedPane.setBackground(panelColor);
-                    tabbedPane.setForeground(foregroundColor);
-                } else {
-                    String[] taskData = line.split(",");
-                    if (taskData.length == 2 && currentTaskPanel != null && currentHistoryPanel != null) {
-                        String taskName = taskData[0];
-                        boolean isChecked = Boolean.parseBoolean(taskData[1]);
-
-                        JCheckBox taskCheckBox = new JCheckBox(taskName);
-                        taskCheckBox.setSelected(isChecked);
-                        taskCheckBox.setBackground(panelColor);
-                        taskCheckBox.setForeground(foregroundColor);
-
-                        if (isChecked) {
-                            taskCheckBox.setText("<html><strike>" + taskName + "</strike></html>");
-                            currentHistoryPanel.add(taskCheckBox, 0);
-                        } else {
-                            currentTaskPanel.add(taskCheckBox);
+                    if (choice == JOptionPane.YES_OPTION) {
+                        String newName = JOptionPane.showInputDialog(null, "Rename list:", tabbedPane.getTitleAt(index));
+                        if (newName != null && !newName.trim().isEmpty()) {
+                            tabbedPane.setTitleAt(index, newName);
                         }
-
-                        final JPanel finalCurrentTaskPanel = currentTaskPanel;
-                        final JPanel finalCurrentHistoryPanel = currentHistoryPanel;
-                        final String finalTaskName = taskName;
-
-                        taskCheckBox.addActionListener(new ActionListener() {
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                if (taskCheckBox.isSelected()) {
-                                    taskCheckBox.setText("<html><strike>" + finalTaskName + "</strike></html>");
-                                    if (finalCurrentHistoryPanel.getComponentCount() >= HISTORY_LIMIT) {
-                                        finalCurrentHistoryPanel.remove(finalCurrentHistoryPanel.getComponentCount() - 1);
-                                    }
-                                    finalCurrentHistoryPanel.add(taskCheckBox, 0);
-                                    finalCurrentTaskPanel.remove(taskCheckBox);
-                                } else {
-                                    taskCheckBox.setText(finalTaskName);
-                                    finalCurrentHistoryPanel.remove(taskCheckBox);
-                                    finalCurrentTaskPanel.add(taskCheckBox);
-                                }
-                                finalCurrentTaskPanel.revalidate();
-                                finalCurrentTaskPanel.repaint();
-                                finalCurrentHistoryPanel.revalidate();
-                                finalCurrentHistoryPanel.repaint();
-                            }
-                        });
                     }
                 }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        });
+    }
+
+    // Load tasks from file (Placeholder function)
+    private static void loadTasksFromFile() {
+        // Placeholder for loading tasks from a file
+    }
+
+    // Save tasks to file (Placeholder function)
+    private static void saveTasksToFile() {
+        // Placeholder for saving tasks to a file
     }
 }
